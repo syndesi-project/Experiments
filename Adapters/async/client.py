@@ -2,10 +2,8 @@ from threading import Thread
 from time import sleep, time
 import socket
 
-
 HOST = 'localhost'
 PORT = 8888
-
 
 class AdapterReadThread(Thread):
     def __init__(self, socket : socket.socket):
@@ -34,15 +32,11 @@ class Adapter():
     def write(self, data):
         self.socket.send(data)
 
-
-
 def main():
     adapter = Adapter()
     adapter.start()
 
     sleep(10)
-
-
 
 if __name__ == '__main__':
     main()
