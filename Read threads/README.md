@@ -6,4 +6,6 @@ This thread is started by the user, and can be stopped by either the client/serv
 
 ## Conclusion
 
-Using ``select.select`` works very well using a socket and a socketpair as a stop flag. This solution should also work on Windows
+Using ``select.select`` works very well using a socket and a socketpair as a stop flag.
+
+This solution also works fine on both linux and windows machine (thanks to the socketpair system)
