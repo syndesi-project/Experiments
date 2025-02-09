@@ -1,0 +1,16 @@
+INFO:root:test
+INFO:root:test
+INFO:root:test 2
+INFO:root:test
+INFO:root:test 2
+INFO:root:test
+INFO:root:test 2
+INFO:root:A
+INFO:root:B
+INFO:root:C
+INFO:root:test
+INFO:root:test 2
+INFO:test_logger:Started
+INFO:root:test
+INFO:root:test 2
+INFO:test_logger:Finished
