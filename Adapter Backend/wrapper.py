@@ -23,6 +23,7 @@ def start_backend():
 class Wrapper:
     def __init__(self, name):
         self.name = name
+        print(f'[wrapper {self.name}] init...')
         if not is_backend_running():
             start_backend()
             time.sleep(0.5)  # Give the backend time to start

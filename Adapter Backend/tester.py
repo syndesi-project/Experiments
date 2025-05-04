@@ -4,14 +4,16 @@ from time import sleep
 def main():
     # Make multiple instances of wrapper
     w1 = Wrapper('1')
-    # w2 = Wrapper('2')
+    sleep(0.5)
+    w2 = Wrapper('2')
     # w3 = Wrapper('3')
 
 
-    w1.ping()
+    # w1.ping()
     # w2.ping()
     # w3.ping()
 
+    sleep(3)
 
     # del w1
     # del w2

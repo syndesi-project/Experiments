@@ -1,51 +1,99 @@
-# yourlib/backend.py
-import sys
 import threading
+import time
+import uuid
 from multiprocessing.connection import Listener
-
-HOST = '127.0.0.1'
-PORT = 59677
-AUTHKEY = b'secret'
-
+import tempfile
 
 class Backend:
-    def __init__(self) -> None:
-        self.listener = Listener((HOST, PORT), authkey=AUTHKEY)
-        print(f"[backend] Listening on {HOST}:{PORT}")
-        self._threads = []
+    def __init__(self, address=('localhost', 59677), authkey=b'secret'):
+        self.listener = Listener(address, authkey=authkey)
+        self.active_clients = set()
+        self.running = True
+        self.lock = threading.RLock()
+        self.shutdown_timer = None  # NEW: store a shutdown timer thread if needed
 
     def start(self):
-        while True:
-            conn = self.listener.accept()
-            print("[backend] Client connected.")
-            t = threading.Thread(target=handle_client, args=(conn,), daemon=True)
-            t.start()
-
-def handle_client(conn):
-    print("[backend] Handling new client.")
-    try:
-        while True:
+        print("[backend] Server started.")
+        while self.running:
             try:
-                msg = conn.recv()
-            except EOFError:
-                print("[backend] Client disconnected.")
+                conn = self.listener.accept()
+                client_id = uuid.uuid4()
+                print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
+                self._register_client(client_id)
+
+                t = threading.Thread(
+                    target=self.handle_client,
+                    args=(conn, client_id),
+                    daemon=True
+                )
+                t.start()
+
+            except Exception as e:
+                if self.running:
+                    print(f"[backend] Exception in accept loop: {e}")
                 break
 
-            print("[backend] Received:", msg)
-            if msg == ("ping", None):
-                conn.send("pong")
+        print("[backend] Server stopped.")
+
+    def handle_client(self, conn, client_id):
+        try:
+            while True:
+                msg = conn.recv()
+                print(f"[backend] Received from {client_id}: {msg}")
+                if msg == "ping":
+                    conn.send("pong")
+                elif msg == "shutdown":
+                    conn.send("shutting down")
+                    self.stop()
+                    break
+                else:
+                    conn.send(f"echo: {msg}")
+        except EOFError:
+            print(f"[backend] Client {client_id} disconnected.")
+        finally:
+            conn.close()
+            self._unregister_client(client_id)
+
+    def _register_client(self, client_id):
+        with self.lock:
+            self.active_clients.add(client_id)
+            print(f"[backend] Active clients: {len(self.active_clients)}")
+
+            # If a shutdown timer is running, cancel it
+            if self.shutdown_timer:
+                print("[backend] New client connected: canceling pending shutdown.")
+                self.shutdown_timer.cancel()
+                self.shutdown_timer = None
+
+    def _unregister_client(self, client_id):
+        with self.lock:
+            self.active_clients.discard(client_id)
+            print(f"[backend] Active clients: {len(self.active_clients)}")
+
+            # Start a shutdown timer if no clients left
+            if not self.active_clients:
+                print("[backend] No more clients. Starting shutdown countdown (10s).")
+                self.shutdown_timer = threading.Timer(10, self._delayed_stop)
+                self.shutdown_timer.start()
+
+    def _delayed_stop(self):
+        with self.lock:
+            if not self.active_clients:
+                print("[backend] No clients reconnected during countdown. Stopping server.")
+                self.stop()
             else:
-                conn.send("unknown command")
-    finally:
-        conn.close()
+                print("[backend] New client connected during countdown. Abort shutdown.")
 
-
-
-
+    def stop(self):
+        with self.lock:
+            if self.running:
+                self.running = False
+                self.listener.close()
+                print("[backend] Listener closed.")
 
 def main():
     backend = Backend()
-    backend.start()    
+    backend.start()
 
 if __name__ == "__main__":
     main()
