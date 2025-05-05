@@ -18,8 +18,8 @@ def main():
     # del w1
     # del w2
     # del w3
-
-    w2.ping()
+    # w1.ping()
+    # w2.ping()
 
 
 if __name__ == '__main__':

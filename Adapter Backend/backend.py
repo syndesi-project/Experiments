@@ -6,7 +6,10 @@ import tempfile
 from colorama import Fore
 
 class Backend:
+    SHUTDOWN_DELAY = 2
+
     def __init__(self, address=('localhost', 59677), authkey=b'secret'):
+        print('starting listener')
         self.listener = Listener(address, authkey=authkey)
         self.active_clients = set()
         self.running = True
@@ -25,15 +28,18 @@ class Backend:
                     break
             print('[backend] accepted client...')
             client_id = uuid.uuid4()
-            print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
-            self._register_client(client_id)
+            if self.listener.last_accepted is not None:
+                # Check if the client didn't disconnect in the meantime
+                print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
+            
+                self._register_client(client_id)
 
-            t = threading.Thread(
-                target=self.handle_client,
-                args=(conn, client_id),
-                daemon=True
-            )
-            t.start()
+                t = threading.Thread(
+                    target=self.handle_client,
+                    args=(conn, client_id),
+                    daemon=True
+                )
+                t.start()
 
             # if self.running:
             #     print(f"{Fore.RED}[backend] Exception in accept loop: {e}{Fore.RESET}")
@@ -48,10 +54,6 @@ class Backend:
                 print(f"[backend] Received from {client_id}: {msg}")
                 if msg == "ping":
                     conn.send("pong")
-                elif msg == "shutdown":
-                    conn.send("shutting down")
-                    self.stop()
-                    break
                 else:
                     conn.send(f"echo: {msg}")
         except EOFError:
@@ -64,7 +66,7 @@ class Backend:
         with self.lock:
             self.active_clients.add(client_id)
             print(f"[backend] Active clients: {len(self.active_clients)}")
-
+            print(self.active_clients)
             # If a shutdown timer is running, cancel it
             if self.shutdown_timer:
                 print("[backend] New client connected: canceling pending shutdown.")
@@ -75,11 +77,12 @@ class Backend:
         with self.lock:
             self.active_clients.discard(client_id)
             print(f"[backend] Active clients: {len(self.active_clients)}")
+            print(self.active_clients)
 
             # Start a shutdown timer if no clients left
             if not self.active_clients:
-                print("[backend] No more clients. Starting shutdown countdown (10s).")
-                self.shutdown_timer = threading.Timer(10, self._delayed_stop)
+                print(f"[backend] No more clients. Starting shutdown countdown ({self.SHUTDOWN_DELAY}s).")
+                self.shutdown_timer = threading.Timer(self.SHUTDOWN_DELAY, self._delayed_stop)
                 self.shutdown_timer.start()
 
     def _delayed_stop(self):

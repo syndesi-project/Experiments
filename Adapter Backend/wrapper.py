@@ -10,12 +10,15 @@ PORT = 59677
 AUTHKEY = b'secret'
 
 def is_backend_running():
+    print('Testing if backend is running...')
     try:
-        # test = Client((HOST, PORT), authkey=AUTHKEY)
-        # test.close()
-        with socket.create_connection((HOST, PORT), timeout=0.2) as s:
-           return True
-    except OSError:
+        test = Client((HOST, PORT), authkey=AUTHKEY)
+        test.close()
+        # with socket.create_connection((HOST, PORT), timeout=0.2) as s:
+        #     s.send(b'test')
+        #     return True
+    except OSError as e:
+        print(f'create_connection returned {e}')
         return False
 
 def start_backend():
@@ -29,7 +32,7 @@ class Wrapper:
         if not is_backend_running():
             print(f'[wrapper] backend is not running, starting it...')
             start_backend()
-            time.sleep(0.5)  # Give the backend time to start
+            time.sleep(0.5) # Give the backend time to start
         else:
             print(f'[wrapper] backend is already running')
 
