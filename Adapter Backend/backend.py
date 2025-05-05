@@ -3,6 +3,7 @@ import time
 import uuid
 from multiprocessing.connection import Listener
 import tempfile
+from colorama import Fore
 
 class Backend:
     def __init__(self, address=('localhost', 59677), authkey=b'secret'):
@@ -10,28 +11,33 @@ class Backend:
         self.active_clients = set()
         self.running = True
         self.lock = threading.RLock()
-        self.shutdown_timer = None  # NEW: store a shutdown timer thread if needed
+        self.shutdown_timer = None
 
     def start(self):
         print("[backend] Server started.")
         while self.running:
+            print('[backend] listening for client...')
             try:
                 conn = self.listener.accept()
-                client_id = uuid.uuid4()
-                print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
-                self._register_client(client_id)
+            except (OSError, EOFError):
+                if not self.running:
+                    # Retry
+                    break
+            print('[backend] accepted client...')
+            client_id = uuid.uuid4()
+            print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
+            self._register_client(client_id)
 
-                t = threading.Thread(
-                    target=self.handle_client,
-                    args=(conn, client_id),
-                    daemon=True
-                )
-                t.start()
+            t = threading.Thread(
+                target=self.handle_client,
+                args=(conn, client_id),
+                daemon=True
+            )
+            t.start()
 
-            except Exception as e:
-                if self.running:
-                    print(f"[backend] Exception in accept loop: {e}")
-                break
+            # if self.running:
+            #     print(f"{Fore.RED}[backend] Exception in accept loop: {e}{Fore.RESET}")
+                #break
 
         print("[backend] Server stopped.")
 
@@ -77,6 +83,7 @@ class Backend:
                 self.shutdown_timer.start()
 
     def _delayed_stop(self):
+        print('[backend] delayed stop')
         with self.lock:
             if not self.active_clients:
                 print("[backend] No clients reconnected during countdown. Stopping server.")
@@ -85,6 +92,7 @@ class Backend:
                 print("[backend] New client connected during countdown. Abort shutdown.")
 
     def stop(self):
+        print(f'[backend] stop')
         with self.lock:
             if self.running:
                 self.running = False

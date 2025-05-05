@@ -4,7 +4,7 @@ from time import sleep
 def main():
     # Make multiple instances of wrapper
     w1 = Wrapper('1')
-    sleep(0.5)
+    sleep(1)
     w2 = Wrapper('2')
     # w3 = Wrapper('3')
 
@@ -18,6 +18,8 @@ def main():
     # del w1
     # del w2
     # del w3
+
+    w2.ping()
 
 
 if __name__ == '__main__':
