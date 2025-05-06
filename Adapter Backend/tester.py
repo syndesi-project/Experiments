@@ -4,8 +4,8 @@ from time import sleep
 def main():
     # Make multiple instances of wrapper
     w1 = Wrapper('1')
-    sleep(1)
-    w2 = Wrapper('2')
+    #sleep(1)
+    #w2 = Wrapper('2')
     # w3 = Wrapper('3')
 
 

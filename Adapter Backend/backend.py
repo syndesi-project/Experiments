@@ -1,50 +1,56 @@
 import threading
 import time
 import uuid
-from multiprocessing.connection import Listener
+from multiprocessing.connection import Listener, Client
 import tempfile
 from colorama import Fore
+
+HOST = '127.0.0.1'
+DEFAULT_PORT = 59677
+DEFAULT_AUTHKEY = b'secret'
 
 class Backend:
     SHUTDOWN_DELAY = 2
 
-    def __init__(self, address=('localhost', 59677), authkey=b'secret'):
+    def __init__(self, port=DEFAULT_PORT, authkey=DEFAULT_AUTHKEY):
         print('starting listener')
-        self.listener = Listener(address, authkey=authkey)
+        self.port = port
+        self.authkey = authkey
+        self.listener = Listener((HOST, self.port), authkey=self.authkey)
         self.active_clients = set()
-        self.running = True
         self.lock = threading.RLock()
         self.shutdown_timer = None
+        self.stop_event = threading.Event()        
 
     def start(self):
         print("[backend] Server started.")
-        while self.running:
-            print('[backend] listening for client...')
+        while True:
+            print(f'{Fore.BLUE}[backend] listening for client...{Fore.RESET}')
             try:
                 conn = self.listener.accept()
             except (OSError, EOFError):
-                if not self.running:
-                    # Retry
-                    break
-            print('[backend] accepted client...')
-            client_id = uuid.uuid4()
-            if self.listener.last_accepted is not None:
-                # Check if the client didn't disconnect in the meantime
-                print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
+                pass
+
+            if self.stop_event.is_set():
+                # Stop the loop
+                conn.close()
+                break
             
-                self._register_client(client_id)
+            client_id = uuid.uuid4()
 
-                t = threading.Thread(
-                    target=self.handle_client,
-                    args=(conn, client_id),
-                    daemon=True
-                )
-                t.start()
+            print(f"[backend] Accepted connection from {self.listener.last_accepted}, client ID: {client_id}")
+        
+            self._register_client(client_id)
 
-            # if self.running:
-            #     print(f"{Fore.RED}[backend] Exception in accept loop: {e}{Fore.RESET}")
-                #break
+            t = threading.Thread(
+                target=self.handle_client,
+                args=(conn, client_id),
+                daemon=True
+            )
+            t.start()
 
+
+        self.listener.close()
         print("[backend] Server stopped.")
 
     def handle_client(self, conn, client_id):
@@ -95,12 +101,17 @@ class Backend:
                 print("[backend] New client connected during countdown. Abort shutdown.")
 
     def stop(self):
-        print(f'[backend] stop')
-        with self.lock:
-            if self.running:
-                self.running = False
-                self.listener.close()
-                print("[backend] Listener closed.")
+        self.stop_event.set()
+
+        # Open a connection
+        try:
+            with Client((HOST, self.port), authkey=self.authkey) as conn:
+                pass
+                #conn.send("shutdown_trigger")
+        except Exception as e:
+            print(f"[Backend] Stop connection failed: {e}")
+
+        return
 
 def main():
     backend = Backend()

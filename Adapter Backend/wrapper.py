@@ -12,14 +12,22 @@ AUTHKEY = b'secret'
 def is_backend_running():
     print('Testing if backend is running...')
     try:
-        test = Client((HOST, PORT), authkey=AUTHKEY)
-        test.close()
-        # with socket.create_connection((HOST, PORT), timeout=0.2) as s:
-        #     s.send(b'test')
-        #     return True
-    except OSError as e:
-        print(f'create_connection returned {e}')
+        conn = Client((HOST, PORT), authkey=AUTHKEY)
+        conn.send("ping")
+        response = conn.recv()
+        conn.close()
+        return response == "pong"
+    except Exception:
         return False
+    # try:
+    #     test = Client((HOST, PORT), authkey=AUTHKEY)
+    #     test.close()
+    #     # with socket.create_connection((HOST, PORT), timeout=0.2) as s:
+    #     #     s.send(b'test')
+    #     #     return True
+    # except OSError as e:
+    #     print(f'create_connection returned {e}')
+    #     return False
 
 def start_backend():
     print("[wrapper] Starting backend...")
