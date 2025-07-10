@@ -7,6 +7,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.shortcuts import print_formatted_text
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.formatted_text import ANSI
+from prompt_toolkit.key_binding import KeyBindings
 
 # File to store persistent history
 HISTORY_FILE = '.myshell_history'
@@ -26,12 +27,20 @@ def main():
     )
 
     # Start the background listener
+    kb = KeyBindings()
+    
+    # Add a function to handle CTRL+R, that happens when the user presses CTRL+R
+    @kb.add('c-r')
+    def _(event):
+        print('Reverse search')
+
+    
     threading.Thread(target=simulate_device_input, daemon=True).start()
 
     with patch_stdout():
         while True:
             try:
-                cmd = session.prompt("> ")
+                cmd = session.prompt("> ", key_bindings=kb)
                 if not cmd.strip():
                     continue
                 print_formatted_text(f"You entered: {cmd}")
