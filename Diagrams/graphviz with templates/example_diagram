@@ -1,0 +1,14 @@
+digraph ClassDiagram {
+	fontname=Consolas rankdir=LR
+	node [fontname=Consolas shape=plaintext]
+	Class_A -> Class_B [label=instantiates]
+	Class_A:m1 -> Class_B:m1 [label=calls]
+	Class_A [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+            <TR><TD BGCOLOR="lightblue"><B>Class A</B></TD></TR>
+            <TR><TD PORT="m1">method1()</TD></TR>
+        </TABLE>>]
+	Class_B [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+            <TR><TD BGCOLOR="lightblue"><B>Class B</B></TD></TR>
+            <TR><TD PORT="m1">method2()</TD></TR>
+        </TABLE>>]
+}

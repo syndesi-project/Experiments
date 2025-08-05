@@ -1,0 +1,19 @@
+// Class Diagram
+digraph {
+	fontname=Consolas fontsize=12 rankdir=LR
+	node [fontname=Consolas shape=plaintext]
+	UserCode [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+    <TR><TD BGCOLOR="lightblue"><B>UserCode</B></TD></TR>
+    <TR><TD>main()</TD></TR><TR><TD>connect()</TD></TR>
+    </TABLE>>]
+	ConnectionManager [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+    <TR><TD BGCOLOR="lightblue"><B>ConnectionManager</B></TD></TR>
+    <TR><TD>__init__()</TD></TR><TR><TD>start_thread()</TD></TR><TR><TD>stop()</TD></TR>
+    </TABLE>>]
+	WorkerThread [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+    <TR><TD BGCOLOR="lightblue"><B>WorkerThread</B></TD></TR>
+    <TR><TD>run()</TD></TR><TR><TD>join()</TD></TR><TR><TD>terminate()</TD></TR>
+    </TABLE>>]
+	UserCode -> ConnectionManager [label=creates]
+	ConnectionManager -> WorkerThread [label=spawns]
+}

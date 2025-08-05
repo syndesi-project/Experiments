@@ -1,0 +1,15 @@
+digraph ClassDiagram {
+	fontname=Consolas rankdir=LR
+	node [fontname=Consolas shape=plaintext]
+	Client_App [label="👤 User" shape=plaintext]
+	Client_App -> Backend:m1 [label=calls]
+	Backend:m1 -> Worker:m1 [label=spawns]
+	Backend [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+            <TR><TD BGCOLOR="lightblue"><B>Backend</B></TD></TR>
+            <TR><TD PORT="m1">connect()</TD></TR>
+        </TABLE>>]
+	Worker [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+            <TR><TD BGCOLOR="lightblue"><B>Worker</B></TD></TR>
+            <TR><TD PORT="m1">run()</TD></TR>
+        </TABLE>>]
+}

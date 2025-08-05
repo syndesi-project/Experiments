@@ -1,0 +1,8 @@
+// Class Instantiation Flow
+digraph {
+	U [label="User Code"]
+	C [label=MyClass]
+	I [label="MyClass Instance"]
+	U -> C [label="calls constructor"]
+	C -> I [label=creates]
+}
